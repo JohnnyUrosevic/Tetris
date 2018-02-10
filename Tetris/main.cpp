@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <random>;
 
 using namespace sf;
 
@@ -12,6 +13,11 @@ const int BLOCK_TYPES[7][4] = {
 	{ 1, 2, 3, 6 }  // Z
 };
 
+//random
+std::random_device rd;     // only used once to initialise (seed) engine
+std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
+std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
+
 int main()
 {
 	RenderWindow window(VideoMode(500, 800), "SFML works!");
@@ -19,10 +25,7 @@ int main()
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
 	
-	Sprite block;
-	block.setTexture(t);
-
-	block.setTextureRect(IntRect(0, 0, 18, 18));
+	int type = uni(rng); //randomly generate block
 
 	while (window.isOpen())
 	{
@@ -35,7 +38,19 @@ int main()
 
 		window.clear();
 
-		window.draw(block);
+	
+
+		for (int i = 0; i < 4; i++) {
+			Sprite block;
+			block.setTexture(t);
+
+
+			block.setTextureRect(IntRect(0, 0, 18, 18));
+
+			block.setPosition((BLOCK_TYPES[type][i] % 2) * 18, (BLOCK_TYPES[type][i] / 2) * 18);
+			window.draw(block);
+		}
+
 		window.display();
 	}
 
