@@ -104,9 +104,9 @@ int main()
 		bool canMoveY = true;
 
 		for (int i = 0; i < 4; i++) {
-			if (board[playerX + dx][playerY] != -1) //block in way horizontally
+			if (board[playerX + (BLOCK_TYPES[type][i] % 2) + dx][playerY + (BLOCK_TYPES[type][i] / 2)] != -1) //block in way horizontally
 				canMoveX = false;
-			if (board[playerX][playerY + dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
+			if (board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2) +  dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
 				canMoveY = false;
 		}
 
@@ -116,7 +116,12 @@ int main()
 		}
 		else {
 			//Place block down
-
+			for (int i = 0; i < 4; i++) {
+				board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2)] = type;
+			}
+			//get new block
+			type = uni(rng);
+			playerX = playerY = 0;
 		}
 
 		//Drawing
@@ -130,7 +135,7 @@ int main()
 
 			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-			block.setPosition((playerX + BLOCK_TYPES[type][i] % 2) * 18, (playerY + BLOCK_TYPES[type][i] / 2) * 18);
+			block.setPosition((playerX + BLOCK_TYPES[type][i] % 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] / 2) * TILESIZE);
 			window.draw(block);
 		}
 
@@ -145,7 +150,7 @@ int main()
 
 					block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-					block.setPosition(i * 18, j * 18);
+					block.setPosition(i * TILESIZE, j * TILESIZE);
 					window.draw(block);
 				}
 			}
