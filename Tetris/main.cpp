@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
-#include <random>;
+#include <random>
+#include <chrono>
 
 using namespace sf;
 
@@ -22,7 +23,7 @@ std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 
 int main()
 {
-	RenderWindow window(VideoMode(500, 800), "SFML works!");
+	RenderWindow window(VideoMode(500, 800), "Tetris");
 	
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
@@ -32,9 +33,20 @@ int main()
 	int x, y; //block position
 	x = y = 0;
 
+	//clock
+	std::chrono::steady_clock::time_point now;
+	std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+
+	std::chrono::duration<double> delta;
+
+	double timeBetweenDrops = 1.0;
+
 	while (window.isOpen())
 	{
+		timeBetweenDrops = 1.0;
+
 		Event event;
+
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
@@ -52,16 +64,25 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::D || event.key.code == Keyboard::Right) {
-					if (x < 26 || (x == 26 && type == 0)) {
+					if (x < 26 || (x == 26 && type == 0 /*I block*/)) {
 						x++;
 					}
 				}
-			}
 
+				if (event.key.code == Keyboard::S || event.key.code == Keyboard::Down) {
+					timeBetweenDrops /= 4;
+				}
+			}
 		}
 
 		window.clear();
 
+		now = std::chrono::steady_clock::now();
+		delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - startTime);
+		if (delta.count() >= timeBetweenDrops) {
+			startTime = std::chrono::steady_clock::now();
+			y++; //drop one
+		}
 
 		for (int i = 0; i < 4; i++) {
 			Sprite block;
