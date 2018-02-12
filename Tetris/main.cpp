@@ -106,7 +106,7 @@ int main()
 		for (int i = 0; i < 4; i++) {
 			if (board[playerX + dx][playerY] != -1) //block in way horizontally
 				canMoveX = false;
-			if (board[playerX][playerY + dy] != -1) //block in way vertically
+			if (board[playerX][playerY + dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
 				canMoveY = false;
 		}
 
@@ -116,6 +116,7 @@ int main()
 		}
 		else {
 			//Place block down
+
 		}
 
 		//Drawing
