@@ -46,7 +46,6 @@ int main()
 		timeBetweenDrops = 1.0;
 
 		Event event;
-
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
@@ -68,11 +67,11 @@ int main()
 						x++;
 					}
 				}
-
-				if (event.key.code == Keyboard::S || event.key.code == Keyboard::Down) {
-					timeBetweenDrops /= 4;
-				}
 			}
+		}
+
+		if (Keyboard::isKeyPressed(Keyboard::S )|| Keyboard::isKeyPressed(Keyboard::Down)) { //accelerate
+			timeBetweenDrops /= 4;
 		}
 
 		window.clear();
