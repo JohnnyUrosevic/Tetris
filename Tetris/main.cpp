@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <random>
+#include <cmath>
 #include <chrono>
 
 using namespace sf;
@@ -23,6 +24,8 @@ std::random_device rd;     // only used once to initialise (seed) engine
 std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
 std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 
+void getBlockXY(int i, int type, bool rotated, bool flipped, int playerX, int playerY, int& x, int& y);
+
 int main()
 {
 	int board[BOARD_WIDTH][BOARD_HEIGHT]; //stores type values for block
@@ -39,7 +42,6 @@ int main()
 	t.loadFromFile("../Textures/tiles.png");
 	
 	int type = uni(rng); //randomly generate block
-	int currentBlock[4] = { BLOCK_TYPES[type][0], BLOCK_TYPES[type][1], BLOCK_TYPES[type][2], BLOCK_TYPES[type][3] }; //make array for current block
 
 	int playerX = 0;
 	int playerY = 0;
@@ -79,7 +81,7 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
-					flipped = rotated;
+					flipped = false;
 					rotated = !rotated; //flip value of rotated
 				}
 
@@ -111,21 +113,15 @@ int main()
 
 		bool canMoveX = true;
 		bool canMoveY = true;
-		if (rotated) {
-			for (int i = 0; i < 4; i++) {
-				if (board[playerX + (BLOCK_TYPES[type][i] / 2) + dx][playerY + (BLOCK_TYPES[type][i] % 2)] != -1) //block in way horizontally
+
+		for (int i = 0; i < 4; i++) {
+				int x;
+				int y;
+				getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
+				if (board[x + dx][y] != -1) //block in way horizontally
 					canMoveX = false;
-				if (board[playerX + (BLOCK_TYPES[type][i] / 2)][playerY + (BLOCK_TYPES[type][i] % 2) + dy] != -1 || playerY + (BLOCK_TYPES[type][i] % 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
+				if (board[x][y + dy] != -1 || (y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
 					canMoveY = false;
-			}
-		}
-		else {
-			for (int i = 0; i < 4; i++) {
-				if (board[playerX + (BLOCK_TYPES[type][i] % 2) + dx][playerY + (BLOCK_TYPES[type][i] / 2)] != -1) //block in way horizontally
-					canMoveX = false;
-				if (board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2) + dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
-					canMoveY = false;
-			}
 		}
 
 		if (canMoveX) { playerX += dx; }
@@ -134,15 +130,11 @@ int main()
 		}
 		else {
 			//Place block down
-			if (rotated) {
-				for (int i = 0; i < 4; i++) {
-					board[playerX + (BLOCK_TYPES[type][i] / 2)][playerY + (BLOCK_TYPES[type][i] % 2)] = type;
-				}
-			}
-			else {
-				for (int i = 0; i < 4; i++) {
-					board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2)] = type;
-				}
+			for (int i = 0; i < 4; i++) {
+				int x;
+				int y;
+				getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
+				board[x][y] = type;
 			}
 			//get new block
 			type = uni(rng);
@@ -160,12 +152,11 @@ int main()
 
 			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-			if (rotated) {
-				block.setPosition((playerX + BLOCK_TYPES[type][i] / 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] % 2) * TILESIZE);
-			}
-			else {
-				block.setPosition((playerX + BLOCK_TYPES[type][i] % 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] / 2) * TILESIZE);
-			}
+			int x;
+			int y;
+			getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
+
+			block.setPosition(x * TILESIZE, y * TILESIZE);
 
 			window.draw(block);
 		}
@@ -191,4 +182,28 @@ int main()
 	}
 
 	return 0;
+}
+
+
+void getBlockXY(int i, int type, bool rotated, bool flipped, int playerX, int playerY, int& x, int& y) {
+	if (flipped) { 
+		//int flipFactor = (i % 2 ) == 1 ? -1 : 1;
+		//i += flipFactor;
+		if (rotated) {
+			x = playerX + BLOCK_TYPES[type][i] % 2;
+			y = playerY + BLOCK_TYPES[type][i] / 2;
+		}
+		else {
+			x = playerX + BLOCK_TYPES[type][i] / 2;
+			y = playerY + BLOCK_TYPES[type][i] % 2;
+		}
+	}
+	else if (rotated) {
+		x = playerX + BLOCK_TYPES[type][i] / 2;
+		y = playerY + BLOCK_TYPES[type][i] % 2;
+	}
+	else {
+		x = playerX + BLOCK_TYPES[type][i] % 2;
+		y = playerY + BLOCK_TYPES[type][i] / 2;
+	}
 }
