@@ -39,12 +39,16 @@ int main()
 	t.loadFromFile("../Textures/tiles.png");
 	
 	int type = uni(rng); //randomly generate block
+	int currentBlock[4] = { BLOCK_TYPES[type][0], BLOCK_TYPES[type][1], BLOCK_TYPES[type][2], BLOCK_TYPES[type][3] }; //make array for current block
 
 	int playerX = 0;
 	int playerY = 0;
 
 	int dx;
 	int dy;
+
+	bool rotated = false;
+	bool flipped = false;
 
 	//clock
 	std::chrono::steady_clock::time_point now;
@@ -71,7 +75,12 @@ int main()
 
 			if (event.type == Event::KeyPressed) {
 				if (event.key.code == Keyboard::Space) {
-					
+
+				}
+
+				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
+					flipped = rotated;
+					rotated = !rotated; //flip value of rotated
 				}
 
 				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
@@ -87,7 +96,7 @@ int main()
 		}
 
 		if (Keyboard::isKeyPressed(Keyboard::S )|| Keyboard::isKeyPressed(Keyboard::Down)) { //accelerate
-			timeBetweenDrops /= 2;
+			timeBetweenDrops /= 4;
 		}
 
 
@@ -102,12 +111,21 @@ int main()
 
 		bool canMoveX = true;
 		bool canMoveY = true;
-
-		for (int i = 0; i < 4; i++) {
-			if (board[playerX + (BLOCK_TYPES[type][i] % 2) + dx][playerY + (BLOCK_TYPES[type][i] / 2)] != -1) //block in way horizontally
-				canMoveX = false;
-			if (board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2) +  dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
-				canMoveY = false;
+		if (rotated) {
+			for (int i = 0; i < 4; i++) {
+				if (board[playerX + (BLOCK_TYPES[type][i] / 2) + dx][playerY + (BLOCK_TYPES[type][i] % 2)] != -1) //block in way horizontally
+					canMoveX = false;
+				if (board[playerX + (BLOCK_TYPES[type][i] / 2)][playerY + (BLOCK_TYPES[type][i] % 2) + dy] != -1 || playerY + (BLOCK_TYPES[type][i] % 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
+					canMoveY = false;
+			}
+		}
+		else {
+			for (int i = 0; i < 4; i++) {
+				if (board[playerX + (BLOCK_TYPES[type][i] % 2) + dx][playerY + (BLOCK_TYPES[type][i] / 2)] != -1) //block in way horizontally
+					canMoveX = false;
+				if (board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2) + dy] != -1 || playerY + (BLOCK_TYPES[type][i] / 2) + dy == BOARD_HEIGHT) //block in way vertically or hit floor
+					canMoveY = false;
+			}
 		}
 
 		if (canMoveX) { playerX += dx; }
@@ -116,8 +134,15 @@ int main()
 		}
 		else {
 			//Place block down
-			for (int i = 0; i < 4; i++) {
-				board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2)] = type;
+			if (rotated) {
+				for (int i = 0; i < 4; i++) {
+					board[playerX + (BLOCK_TYPES[type][i] / 2)][playerY + (BLOCK_TYPES[type][i] % 2)] = type;
+				}
+			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					board[playerX + (BLOCK_TYPES[type][i] % 2)][playerY + (BLOCK_TYPES[type][i] / 2)] = type;
+				}
 			}
 			//get new block
 			type = uni(rng);
@@ -135,7 +160,13 @@ int main()
 
 			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-			block.setPosition((playerX + BLOCK_TYPES[type][i] % 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] / 2) * TILESIZE);
+			if (rotated) {
+				block.setPosition((playerX + BLOCK_TYPES[type][i] / 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] % 2) * TILESIZE);
+			}
+			else {
+				block.setPosition((playerX + BLOCK_TYPES[type][i] % 2) * TILESIZE, (playerY + BLOCK_TYPES[type][i] / 2) * TILESIZE);
+			}
+
 			window.draw(block);
 		}
 
