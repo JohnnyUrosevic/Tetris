@@ -9,8 +9,8 @@ const int BLOCK_TYPES[7][4] = {
 	{ 0, 2, 4, 6 }, // I
 	{ 0, 1, 2, 3 }, // O
 	{ 1, 2, 3, 5 }, // T
-	{ 1, 3, 4, 5 }, // L
-	{ 0, 1, 2, 4 }, // J
+	{ 0, 1, 3, 5 }, // L
+	{ 1, 3, 4, 5 }, // J
 	{ 0, 2, 3, 5 }, // S
 	{ 1, 2, 3, 4 }  // Z
 };
@@ -81,7 +81,7 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
-					flipped = false;
+					//flipped = true;
 					rotated = !rotated; //flip value of rotated
 				}
 
@@ -186,24 +186,19 @@ int main()
 
 
 void getBlockXY(int i, int type, bool rotated, bool flipped, int playerX, int playerY, int& x, int& y) {
+	int n = BLOCK_TYPES[type][i];
+	int flipfactor = 0;
+
 	if (flipped) { 
-		//int flipFactor = (i % 2 ) == 1 ? -1 : 1;
-		//i += flipFactor;
-		if (rotated) {
-			x = playerX + BLOCK_TYPES[type][i] % 2;
-			y = playerY + BLOCK_TYPES[type][i] / 2;
-		}
-		else {
-			x = playerX + BLOCK_TYPES[type][i] / 2;
-			y = playerY + BLOCK_TYPES[type][i] % 2;
-		}
+		flipfactor = (n % 2 == 1) ? -1 : 1;
 	}
-	else if (rotated) {
-		x = playerX + BLOCK_TYPES[type][i] / 2;
-		y = playerY + BLOCK_TYPES[type][i] % 2;
+
+	if (rotated) {
+		x = playerX + n / 2;
+		y = playerY + (n + flipfactor) % 2;
 	}
 	else {
-		x = playerX + BLOCK_TYPES[type][i] % 2;
-		y = playerY + BLOCK_TYPES[type][i] / 2;
+		x = playerX + (n + flipfactor) % 2;
+		y = playerY + n / 2;
 	}
 }
