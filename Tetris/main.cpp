@@ -1,7 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <random>
-#include <cmath>
 #include <chrono>
+#include <iostream>
+
 
 using namespace sf;
 
@@ -24,7 +25,26 @@ std::random_device rd;     // only used once to initialise (seed) engine
 std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
 std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 
-void getBlockXY(int i, int type, bool rotated, bool flipped, int playerX, int playerY, int& x, int& y);
+struct Player {
+	Vector2i pos;
+	int type;
+	Vector2i blockPos[4];
+
+	void getBlockPos() {
+		for (int i = 0; i < 4; i++) {
+			int n = BLOCK_TYPES[type][i];
+			blockPos[i].x = pos.x + n % 2;
+			blockPos[i].y = pos.y + n / 2;
+			std::cout << blockPos[i].x << blockPos[i].y << std::endl;
+		}
+	}
+
+	void rotateRight() {
+
+	}
+	
+};
+
 
 int main()
 {
@@ -41,10 +61,13 @@ int main()
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
 	
-	int type = uni(rng); //randomly generate block
+	Player p;
 
-	int playerX = 0;
-	int playerY = 0;
+	p.type = uni(rng); //randomly generate block
+
+	p.pos = Vector2i(0, 0);
+
+	p.getBlockPos();
 
 	int dx;
 	int dy;
@@ -86,12 +109,12 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
-					if (playerX != 0)
+					if (p.pos.x != 0)
 						dx = -1;
 				}
 
 				if (event.key.code == Keyboard::D || event.key.code == Keyboard::Right) {
-					if (playerX + 1 < BOARD_WIDTH - 1 || (type == 0 && playerX < BOARD_WIDTH - 1))
+					if (p.pos.x + 1 < BOARD_WIDTH - 1 || (p.type == 0 && p.pos.x < BOARD_WIDTH - 1))
 						dx = 1;
 				}
 			}
@@ -115,31 +138,29 @@ int main()
 		bool canMoveY = true;
 
 		for (int i = 0; i < 4; i++) {
-				int x;
-				int y;
-				getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
-				if (board[x + dx][y] != -1) //block in way horizontally
-					canMoveX = false;
-				if (board[x][y + dy] != -1 || (y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
-					canMoveY = false;
+			Vector2i v = p.blockPos[i];
+			if (board[v.x + dx][v.y] != -1) //block in way horizontally
+				canMoveX = false;
+			if (board[v.x][v.y + dy] != -1 || (v.y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
+				canMoveY = false;
 		}
 
-		if (canMoveX) { playerX += dx; }
+		if (canMoveX) { p.pos.x += dx; }
 		if (canMoveY) { 
-			playerY += dy; 
+			p.pos.y += dy; 
 		}
 		else {
 			//Place block down
 			for (int i = 0; i < 4; i++) {
-				int x;
-				int y;
-				getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
-				board[x][y] = type;
+				Vector2i v = p.blockPos[i];
+				board[v.x][v.y] = p.type;
 			}
 			//get new block
-			type = uni(rng);
-			playerX = playerY = 0;
+			p.type = uni(rng);
+			p.pos = Vector2i(0, 0);
 		}
+
+		p.getBlockPos();
 
 		//Drawing
 		window.clear();
@@ -150,13 +171,11 @@ int main()
 			Sprite block;
 			block.setTexture(t);
 
-			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
+			block.setTextureRect(IntRect(p.type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-			int x;
-			int y;
-			getBlockXY(i, type, rotated, flipped, playerX, playerY, x, y);
+			Vector2i v = p.blockPos[i];
 
-			block.setPosition(x * TILESIZE, y * TILESIZE);
+			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
 
 			window.draw(block);
 		}
@@ -184,21 +203,3 @@ int main()
 	return 0;
 }
 
-
-void getBlockXY(int i, int type, bool rotated, bool flipped, int playerX, int playerY, int& x, int& y) {
-	int n = BLOCK_TYPES[type][i];
-	int flipfactor = 0;
-
-	if (flipped) { 
-		flipfactor = (n % 2 == 1) ? -1 : 1;
-	}
-
-	if (rotated) {
-		x = playerX + n / 2;
-		y = playerY + (n + flipfactor) % 2;
-	}
-	else {
-		x = playerX + (n + flipfactor) % 2;
-		y = playerY + n / 2;
-	}
-}
