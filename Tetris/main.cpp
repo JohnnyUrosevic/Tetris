@@ -2,8 +2,6 @@
 #include <random>
 #include <chrono>
 #include <iostream>
-
-
 using namespace sf;
 
 const int BLOCK_TYPES[7][4] = {
@@ -38,7 +36,7 @@ struct Player {
 		}
 	}
 
-	void rotateRight() {
+	void rotateRight(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
 		if (type == 1) //O
 			return;
 		Vector2i temp[4]; //store new positions temporarily
@@ -51,10 +49,12 @@ struct Player {
 			temp[i].x = (blockPos[i].y - origin.y);
 			temp[i].y = -1 * (blockPos[i].x - origin.x);
 			temp[i].x += origin.x;
-			if (temp[i].x < 0 || temp[i].x >= BOARD_WIDTH)
+			if (temp[i].x < 0 || temp[i].x >= BOARD_WIDTH) //x out of bounds
 				return;
 			temp[i].y += origin.y;
-			if (temp[i].y < 0 || temp[i].y >= BOARD_HEIGHT)
+			if (temp[i].y < 0 || temp[i].y >= BOARD_HEIGHT) //y out of bounds
+				return;
+			if (board[temp[i].x][temp[i].y] != -1) //block in way
 				return;
 		}
 
@@ -123,15 +123,15 @@ int main()
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
 					//flipped = true;
-					p.rotateRight(); 
+					p.rotateRight(board); 
 				}
 
 				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
-						dx = -1;
+					dx = -1;
 				}
 
 				if (event.key.code == Keyboard::D || event.key.code == Keyboard::Right) {
-						dx = 1;
+					dx = 1;
 				}
 			}
 		}
