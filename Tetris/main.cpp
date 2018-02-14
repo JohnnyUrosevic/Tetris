@@ -30,17 +30,25 @@ struct Player {
 	int type;
 	Vector2i blockPos[4];
 
-	void getBlockPos() {
+	void initBlockPos() {
 		for (int i = 0; i < 4; i++) {
 			int n = BLOCK_TYPES[type][i];
-			blockPos[i].x = pos.x + n % 2;
-			blockPos[i].y = pos.y + n / 2;
+			blockPos[i].x = n % 2;
+			blockPos[i].y = n / 2;
 			std::cout << blockPos[i].x << blockPos[i].y << std::endl;
 		}
 	}
 
 	void rotateRight() {
-
+		Vector2i origin = blockPos[1];
+		for (int i = 0; i < 4; i++) {
+			if (i == 1) continue;
+			int temp = blockPos[i].x;
+			blockPos[i].x = (blockPos[i].y - origin.y);
+			blockPos[i].y = -1 * (temp - origin.x);
+			blockPos[i].x += origin.x;
+			blockPos[i].y += origin.y;
+		}
 	}
 	
 };
@@ -67,7 +75,7 @@ int main()
 
 	p.pos = Vector2i(0, 0);
 
-	p.getBlockPos();
+	p.initBlockPos();
 
 	int dx;
 	int dy;
@@ -105,7 +113,7 @@ int main()
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
 					//flipped = true;
-					rotated = !rotated; //flip value of rotated
+					p.rotateRight(); 
 				}
 
 				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
@@ -145,9 +153,16 @@ int main()
 				canMoveY = false;
 		}
 
-		if (canMoveX) { p.pos.x += dx; }
+		if (canMoveX) { 
+			p.pos.x += dx;
+			for (int i = 0; i < 4; i++) {
+				p.blockPos[i].x += dx;
+			}
+		}
 		if (canMoveY) { 
-			p.pos.y += dy; 
+			for (int i = 0; i < 4; i++) {
+				p.blockPos[i].y += dy;
+			}
 		}
 		else {
 			//Place block down
@@ -158,9 +173,10 @@ int main()
 			//get new block
 			p.type = uni(rng);
 			p.pos = Vector2i(0, 0);
+			p.initBlockPos();
 		}
 
-		p.getBlockPos();
+
 
 		//Drawing
 		window.clear();
