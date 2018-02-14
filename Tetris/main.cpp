@@ -26,7 +26,6 @@ std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in thi
 std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 
 struct Player {
-	Vector2i pos;
 	int type;
 	Vector2i blockPos[4];
 
@@ -73,8 +72,6 @@ int main()
 
 	p.type = uni(rng); //randomly generate block
 
-	p.pos = Vector2i(0, 0);
-
 	p.initBlockPos();
 
 	int dx;
@@ -117,12 +114,10 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
-					if (p.pos.x != 0)
 						dx = -1;
 				}
 
 				if (event.key.code == Keyboard::D || event.key.code == Keyboard::Right) {
-					if (p.pos.x + 1 < BOARD_WIDTH - 1 || (p.type == 0 && p.pos.x < BOARD_WIDTH - 1))
 						dx = 1;
 				}
 			}
@@ -147,14 +142,13 @@ int main()
 
 		for (int i = 0; i < 4; i++) {
 			Vector2i v = p.blockPos[i];
-			if (board[v.x + dx][v.y] != -1) //block in way horizontally
+			if (board[v.x + dx][v.y] != -1 || v.x + dx > BOARD_WIDTH - 1 || v.x + dx < 0) //block in way horizontally
 				canMoveX = false;
 			if (board[v.x][v.y + dy] != -1 || (v.y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
 				canMoveY = false;
 		}
 
 		if (canMoveX) { 
-			p.pos.x += dx;
 			for (int i = 0; i < 4; i++) {
 				p.blockPos[i].x += dx;
 			}
@@ -172,7 +166,6 @@ int main()
 			}
 			//get new block
 			p.type = uni(rng);
-			p.pos = Vector2i(0, 0);
 			p.initBlockPos();
 		}
 
