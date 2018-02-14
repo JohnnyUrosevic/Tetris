@@ -17,8 +17,8 @@ const int BLOCK_TYPES[7][4] = {
 };
 
 const int TILESIZE = 18;
-const int BOARD_WIDTH = 27;
-const int BOARD_HEIGHT = 44;
+const int BOARD_WIDTH = 15;
+const int BOARD_HEIGHT = 25;
 
 //random
 std::random_device rd;     // only used once to initialise (seed) engine
@@ -39,14 +39,27 @@ struct Player {
 	}
 
 	void rotateRight() {
-		Vector2i origin = blockPos[1];
+		if (type == 1) //O
+			return;
+		Vector2i temp[4]; //store new positions temporarily
+		Vector2i origin = blockPos[2];
 		for (int i = 0; i < 4; i++) {
-			if (i == 1) continue;
-			int temp = blockPos[i].x;
-			blockPos[i].x = (blockPos[i].y - origin.y);
-			blockPos[i].y = -1 * (temp - origin.x);
-			blockPos[i].x += origin.x;
-			blockPos[i].y += origin.y;
+			if (i == 2) {
+				temp[i] = blockPos[i];
+				continue;
+			}
+			temp[i].x = (blockPos[i].y - origin.y);
+			temp[i].y = -1 * (blockPos[i].x - origin.x);
+			temp[i].x += origin.x;
+			if (temp[i].x < 0 || temp[i].x >= BOARD_WIDTH)
+				return;
+			temp[i].y += origin.y;
+			if (temp[i].y < 0 || temp[i].y >= BOARD_HEIGHT)
+				return;
+		}
+
+		for (int i = 0; i < 4; i++) { //commit temp to block pos 
+			blockPos[i] = temp[i];
 		}
 	}
 	
