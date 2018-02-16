@@ -27,16 +27,21 @@ struct Player {
 	int type;
 	Vector2i blockPos[4];
 
-	void initBlockPos() {
+	Player() {
+		newBlock();
+	}
+
+	void newBlock() {
+		type = uni(rng);
 		for (int i = 0; i < 4; i++) {
 			int n = BLOCK_TYPES[type][i];
-			blockPos[i].x = n % 2;
+			blockPos[i].x = BOARD_WIDTH / 2 + n % 2;
 			blockPos[i].y = n / 2;
 			std::cout << blockPos[i].x << blockPos[i].y << std::endl;
 		}
 	}
 
-	void rotateRight(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
+	void rotate(int board[BOARD_WIDTH][BOARD_HEIGHT], int dir) { //-1 is left, 1 is right
 		if (type == 1) //O
 			return;
 		Vector2i temp[4]; //store new positions temporarily
@@ -46,8 +51,8 @@ struct Player {
 				temp[i] = blockPos[i];
 				continue;
 			}
-			temp[i].x = (blockPos[i].y - origin.y);
-			temp[i].y = -1 * (blockPos[i].x - origin.x);
+			temp[i].x = dir * (blockPos[i].y - origin.y);
+			temp[i].y = -1 * dir * (blockPos[i].x - origin.x);
 			temp[i].x += origin.x;
 			if (temp[i].x < 0 || temp[i].x >= BOARD_WIDTH) //x out of bounds
 				return;
@@ -58,11 +63,14 @@ struct Player {
 				return;
 		}
 
-		for (int i = 0; i < 4; i++) { //commit temp to block pos 
+		for (int i = 0; i < 4; i++) { //commit temp to block pos
 			blockPos[i] = temp[i];
 		}
 	}
-	
+
+	void hardDrop(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
+
+	}
 };
 
 
@@ -77,15 +85,11 @@ int main()
 	}
 
 	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH, TILESIZE * BOARD_HEIGHT), "Tetris");
-	
+
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
-	
+
 	Player p;
-
-	p.type = uni(rng); //randomly generate block
-
-	p.initBlockPos();
 
 	int dx;
 	int dy;
@@ -96,18 +100,19 @@ int main()
 	//clock
 	std::chrono::steady_clock::time_point now;
 	std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point lastMove = std::chrono::steady_clock::now();
 
 	std::chrono::duration<double> delta;
 
 	double timeBetweenDrops;
-
+	double moveDelay = .09;
 
 	while (window.isOpen())
 	{
 		timeBetweenDrops = .25;
 		dx = 0;
 		dy = 0;
-		
+
 		//Input
 
 		Event event;
@@ -122,27 +127,38 @@ int main()
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
-					//flipped = true;
-					p.rotateRight(board); 
+					p.rotate(board, 1);
 				}
 
-				if (event.key.code == Keyboard::A || event.key.code == Keyboard::Left) {
-					dx = -1;
-				}
-
-				if (event.key.code == Keyboard::D || event.key.code == Keyboard::Right) {
-					dx = 1;
+				if (event.key.code == Keyboard::Z) {
+					p.rotate(board, -1);
 				}
 			}
 		}
 
-		if (Keyboard::isKeyPressed(Keyboard::S )|| Keyboard::isKeyPressed(Keyboard::Down)) { //accelerate
+		if (Keyboard::isKeyPressed(Keyboard::S)|| Keyboard::isKeyPressed(Keyboard::Down)) { //accelerate
 			timeBetweenDrops /= 4;
 		}
 
+		now = std::chrono::steady_clock::now(); //get current time
+		delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - lastMove); //time between moves
+		if(delta.count() >= moveDelay) {
+			if (Keyboard::isKeyPressed(Keyboard::A)|| Keyboard::isKeyPressed(Keyboard::Left)) {
+				dx = -1;
+				lastMove = std::chrono::steady_clock::now();
+			}
+			if (Keyboard::isKeyPressed(Keyboard::D)|| Keyboard::isKeyPressed(Keyboard::Right)) {
+				if (dx == -1) { //holding both directions
+					dx = 0;
+				}
+				else {
+					dx = 1;
+					lastMove = std::chrono::steady_clock::now();
+				}
+			}
+		}
 
-		now = std::chrono::steady_clock::now();
-		delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - startTime);
+		delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - startTime); //block gravity
 		if (delta.count() >= timeBetweenDrops) {
 			startTime = std::chrono::steady_clock::now();
 			dy = 1; //drop one
@@ -161,12 +177,12 @@ int main()
 				canMoveY = false;
 		}
 
-		if (canMoveX) { 
+		if (canMoveX) {
 			for (int i = 0; i < 4; i++) {
 				p.blockPos[i].x += dx;
 			}
 		}
-		if (canMoveY) { 
+		if (canMoveY) {
 			for (int i = 0; i < 4; i++) {
 				p.blockPos[i].y += dy;
 			}
@@ -178,11 +194,8 @@ int main()
 				board[v.x][v.y] = p.type;
 			}
 			//get new block
-			p.type = uni(rng);
-			p.initBlockPos();
+			p.newBlock();
 		}
-
-
 
 		//Drawing
 		window.clear();
@@ -224,4 +237,3 @@ int main()
 
 	return 0;
 }
-
