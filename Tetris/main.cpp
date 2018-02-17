@@ -68,8 +68,29 @@ struct Player {
 		}
 	}
 
-	void hardDrop(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
 
+	void hardDrop(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
+		int dy = 0;
+		bool canMoveY = true;
+		while (canMoveY) {
+			dy++;
+			for (int i = 3; i >= 0; i--) { //loop bottom to top
+				Vector2i v = blockPos[i];
+				std::cout << v.y + dy << std::endl;
+				if (v.y + dy == BOARD_HEIGHT - 1 || board[v.x][v.y+dy+1] != -1) {
+					canMoveY = false;
+					break;
+				}
+			}
+		}
+
+		//place block
+		for (int i = 0; i < 4; i++) {
+			Vector2i v = blockPos[i];
+			board[v.x][v.y + dy] = type;
+		}
+
+		newBlock();
 	}
 };
 
@@ -123,7 +144,7 @@ int main()
 
 			if (event.type == Event::KeyPressed) {
 				if (event.key.code == Keyboard::Space) {
-
+					p.hardDrop(board);
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
