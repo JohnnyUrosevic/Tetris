@@ -70,7 +70,7 @@ struct Player {
 
 
 	void hardDrop(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
-		int dy = 0;
+		int dy = -1;
 		bool canMoveY = true;
 		while (canMoveY) {
 			dy++;
@@ -91,6 +91,41 @@ struct Player {
 		}
 
 		newBlock();
+	}
+
+	void move(int board[BOARD_WIDTH][BOARD_HEIGHT], int dx, int dy) {
+
+		bool canMoveX = true;
+		bool canMoveY = true;
+
+		for (int i = 0; i < 4; i++) {
+			Vector2i v = blockPos[i];
+			if (board[v.x + dx][v.y] != -1 || v.x + dx > BOARD_WIDTH - 1 || v.x + dx < 0) //block in way horizontally
+				canMoveX = false;
+			if (board[v.x][v.y + dy] != -1 || (v.y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
+				canMoveY = false;
+		}
+
+		if (canMoveX) {
+			for (int i = 0; i < 4; i++) {
+				blockPos[i].x += dx;
+			}
+		}
+		if (canMoveY) {
+			for (int i = 0; i < 4; i++) {
+				blockPos[i].y += dy;
+			}
+		}
+		else {
+			//Place block down
+			for (int i = 0; i < 4; i++) {
+				Vector2i v = blockPos[i];
+				board[v.x][v.y] = type;
+			}
+			//get new block
+			newBlock();
+		}
+
 	}
 };
 
@@ -114,9 +149,6 @@ int main()
 
 	int dx;
 	int dy;
-
-	bool rotated = false;
-	bool flipped = false;
 
 	//clock
 	std::chrono::steady_clock::time_point now;
@@ -186,37 +218,7 @@ int main()
 		}
 
 		//move block
-
-		bool canMoveX = true;
-		bool canMoveY = true;
-
-		for (int i = 0; i < 4; i++) {
-			Vector2i v = p.blockPos[i];
-			if (board[v.x + dx][v.y] != -1 || v.x + dx > BOARD_WIDTH - 1 || v.x + dx < 0) //block in way horizontally
-				canMoveX = false;
-			if (board[v.x][v.y + dy] != -1 || (v.y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
-				canMoveY = false;
-		}
-
-		if (canMoveX) {
-			for (int i = 0; i < 4; i++) {
-				p.blockPos[i].x += dx;
-			}
-		}
-		if (canMoveY) {
-			for (int i = 0; i < 4; i++) {
-				p.blockPos[i].y += dy;
-			}
-		}
-		else {
-			//Place block down
-			for (int i = 0; i < 4; i++) {
-				Vector2i v = p.blockPos[i];
-				board[v.x][v.y] = p.type;
-			}
-			//get new block
-			p.newBlock();
-		}
+		p.move(board, dx, dy);
 
 		//Drawing
 		window.clear();
