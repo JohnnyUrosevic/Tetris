@@ -23,11 +23,58 @@ std::random_device rd;     // only used once to initialise (seed) engine
 std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
 std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 
-struct Player {
+
+//CLASSES TODO PUT IN SEPERATE FILES
+class Game {
+private:
+	int board[BOARD_WIDTH][BOARD_HEIGHT]; //stores type values for block
+
+public:
+	Game() {
+		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to -1
+			for (int j = 0; j < BOARD_HEIGHT; j++) {
+				board[i][j] = -1;
+			}
+		}
+	}
+
+	//TODO add error checking in these methods
+	inline void setBlock(Vector2i pos, int type) {
+		board[pos.x][pos.y] = type;
+	}
+
+	inline int getBlock(Vector2i pos) {
+		return board[pos.x][pos.y];
+	}
+
+	void draw(Texture& t, RenderWindow& window) {
+		for (int i = 0; i < BOARD_WIDTH; i++) {
+			for (int j = 0; j < BOARD_HEIGHT; j++) {
+				int type = board[i][j];
+
+				if (type != -1) { //not a block
+					Sprite block;
+					block.setTexture(t);
+
+					block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
+
+					block.setPosition(i * TILESIZE, j * TILESIZE);
+					window.draw(block);
+				}
+			}
+		}
+	}
+};
+
+class Player {
+private:
 	int type;
 	Vector2i blockPos[4];
+	Game* g;
 
-	Player() {
+public:
+	Player(Game* game) {
+		g = game;
 		newBlock();
 	}
 
@@ -41,7 +88,7 @@ struct Player {
 		}
 	}
 
-	void rotate(int board[BOARD_WIDTH][BOARD_HEIGHT], int dir) { //-1 is left, 1 is right
+	void rotate(int dir) { //-1 is left, 1 is right
 		if (type == 1) //O
 			return;
 		Vector2i temp[4]; //store new positions temporarily
@@ -59,7 +106,7 @@ struct Player {
 			temp[i].y += origin.y;
 			if (temp[i].y < 0 || temp[i].y >= BOARD_HEIGHT) //y out of bounds
 				return;
-			if (board[temp[i].x][temp[i].y] != -1) //block in way
+			if (g->getBlock(temp[i]) != -1) //block in way
 				return;
 		}
 
@@ -69,15 +116,13 @@ struct Player {
 	}
 
 
-	void hardDrop(int board[BOARD_WIDTH][BOARD_HEIGHT]) {
-		int dy = -1;
+	void hardDrop() {
+		Vector2i dy(0, -1);
 		bool canMoveY = true;
 		while (canMoveY) {
-			dy++;
+			dy.y++;
 			for (int i = 3; i >= 0; i--) { //loop bottom to top
-				Vector2i v = blockPos[i];
-				std::cout << v.y + dy << std::endl;
-				if (v.y + dy == BOARD_HEIGHT - 1 || board[v.x][v.y+dy+1] != -1) {
+				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + Vector2i(0, 1)) != -1) {
 					canMoveY = false;
 					break;
 				}
@@ -86,23 +131,23 @@ struct Player {
 
 		//place block
 		for (int i = 0; i < 4; i++) {
-			Vector2i v = blockPos[i];
-			board[v.x][v.y + dy] = type;
+			g->setBlock(blockPos[i] + dy, type);
 		}
 
 		newBlock();
 	}
 
-	void move(int board[BOARD_WIDTH][BOARD_HEIGHT], int dx, int dy) {
+	void move(int dx, int dy) {
 
 		bool canMoveX = true;
 		bool canMoveY = true;
 
 		for (int i = 0; i < 4; i++) {
-			Vector2i v = blockPos[i];
-			if (board[v.x + dx][v.y] != -1 || v.x + dx > BOARD_WIDTH - 1 || v.x + dx < 0) //block in way horizontally
+			Vector2i vx(dx, 0);
+			Vector2i vy(0, dy);
+			if (g->getBlock(blockPos[i] + vx) != -1 || blockPos[i].x + dx > BOARD_WIDTH - 1 || blockPos[i].x + dx < 0) //block in way horizontally
 				canMoveX = false;
-			if (board[v.x][v.y + dy] != -1 || (v.y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
+			if (g->getBlock(blockPos[i] + vy) != -1 || (blockPos[i].y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
 				canMoveY = false;
 		}
 
@@ -119,33 +164,39 @@ struct Player {
 		else {
 			//Place block down
 			for (int i = 0; i < 4; i++) {
-				Vector2i v = blockPos[i];
-				board[v.x][v.y] = type;
+				g->setBlock(blockPos[i], type);
 			}
 			//get new block
 			newBlock();
 		}
 
 	}
-};
 
+	void draw(Texture& t, RenderWindow& window) {
+		for (int i = 0; i < 4; i++) {
+			Sprite block;
+			block.setTexture(t);
+
+			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
+
+			Vector2i v = blockPos[i];
+
+			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
+
+			window.draw(block);
+		}
+	}
+};
 
 int main()
 {
-	int board[BOARD_WIDTH][BOARD_HEIGHT]; //stores type values for block
-
-	for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to -1
-		for (int j = 0; j < BOARD_HEIGHT; j++) {
-			board[i][j] = -1;
-		}
-	}
-
 	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH, TILESIZE * BOARD_HEIGHT), "Tetris");
 
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
 
-	Player p;
+	Game game;
+	Player p(&game);
 
 	int dx;
 	int dy;
@@ -176,15 +227,15 @@ int main()
 
 			if (event.type == Event::KeyPressed) {
 				if (event.key.code == Keyboard::Space) {
-					p.hardDrop(board);
+					p.hardDrop();
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
-					p.rotate(board, 1);
+					p.rotate(1);
 				}
 
 				if (event.key.code == Keyboard::Z) {
-					p.rotate(board, -1);
+					p.rotate(-1);
 				}
 			}
 		}
@@ -218,42 +269,17 @@ int main()
 		}
 
 		//move block
-		p.move(board, dx, dy);
+		p.move(dx, dy);
 
 		//Drawing
 		window.clear();
 
 
 		//draw player piece
-		for (int i = 0; i < 4; i++) {
-			Sprite block;
-			block.setTexture(t);
-
-			block.setTextureRect(IntRect(p.type * TILESIZE, 0, TILESIZE, TILESIZE));
-
-			Vector2i v = p.blockPos[i];
-
-			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
-
-			window.draw(block);
-		}
+		p.draw(t, window);
 
 		//draw board
-		for (int i = 0; i < BOARD_WIDTH; i++) {
-			for (int j = 0; j < BOARD_HEIGHT; j++) {
-				int type = board[i][j];
-
-				if (type != -1) { //not a block
-					Sprite block;
-					block.setTexture(t);
-
-					block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
-
-					block.setPosition(i * TILESIZE, j * TILESIZE);
-					window.draw(block);
-				}
-			}
-		}
+		game.draw(t, window);
 
 		window.display();
 	}
