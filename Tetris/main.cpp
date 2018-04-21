@@ -47,6 +47,7 @@ public:
 		return board[pos.x][pos.y];
 	}
 
+	//Handles graphics for every frame
 	void draw(Texture& t, RenderWindow& window) {
 		for (int i = 0; i < BOARD_WIDTH; i++) {
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
