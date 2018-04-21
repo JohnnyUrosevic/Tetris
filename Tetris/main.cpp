@@ -118,11 +118,12 @@ public:
 
 	void hardDrop() {
 		Vector2i dy(0, -1);
+		Vector2i below(0, 1);
 		bool canMoveY = true;
 		while (canMoveY) {
 			dy.y++;
 			for (int i = 3; i >= 0; i--) { //loop bottom to top
-				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + Vector2i(0, 1)) != -1) {
+				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + below) != -1) {
 					canMoveY = false;
 					break;
 				}
@@ -262,6 +263,8 @@ int main()
 			}
 		}
 
+
+		//Calculate movement
 		delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - startTime); //block gravity
 		if (delta.count() >= timeBetweenDrops) {
 			startTime = std::chrono::steady_clock::now();
@@ -273,7 +276,6 @@ int main()
 
 		//Drawing
 		window.clear();
-
 
 		//draw player piece
 		p.draw(t, window);
