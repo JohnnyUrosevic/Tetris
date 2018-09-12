@@ -41,6 +41,8 @@ public:
 	//TODO add error checking in these methods
 	inline void setBlock(Vector2i pos, int type) {
 		board[pos.x][pos.y] = type;
+
+		//TODO CHECK IF ROW HAS CLEARED
 	}
 
 	inline int getBlock(Vector2i pos) {
@@ -85,7 +87,6 @@ public:
 			int n = BLOCK_TYPES[type][i];
 			blockPos[i].x = BOARD_WIDTH / 2 + n % 2;
 			blockPos[i].y = n / 2;
-			std::cout << blockPos[i].x << blockPos[i].y << std::endl;
 		}
 	}
 
@@ -131,7 +132,7 @@ public:
 			}
 		}
 
-		//place block
+		//Place block
 		for (int i = 0; i < 4; i++) {
 			g->setBlock(blockPos[i] + dy, type);
 		}
@@ -168,7 +169,7 @@ public:
 			for (int i = 0; i < 4; i++) {
 				g->setBlock(blockPos[i], type);
 			}
-			//get new block
+			//Get new block
 			newBlock();
 		}
 
@@ -177,8 +178,10 @@ public:
 	void draw(Texture& t, RenderWindow& window) {
 		for (int i = 0; i < 4; i++) {
 			Sprite block;
+
 			block.setTexture(t);
 
+			//Slices specific color we want
 			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
 			Vector2i v = blockPos[i];
@@ -190,8 +193,7 @@ public:
 	}
 };
 
-int main()
-{
+int main() {
 	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH, TILESIZE * BOARD_HEIGHT), "Tetris");
 
 	Texture t;
@@ -213,8 +215,8 @@ int main()
 	double timeBetweenDrops;
 	double moveDelay = .09;
 
-	while (window.isOpen())
-	{
+	//Game Loop
+	while (window.isOpen()) {
 		timeBetweenDrops = .25;
 		dx = 0;
 		dy = 0;
@@ -222,8 +224,7 @@ int main()
 		//Input
 
 		Event event;
-		while (window.pollEvent(event))
-		{
+		while (window.pollEvent(event)) {
 			if (event.type == Event::Closed)
 				window.close();
 
@@ -272,7 +273,7 @@ int main()
 			dy = 1; //drop one
 		}
 
-		//move block
+		//move block appropriately
 		p.move(dx, dy);
 
 		//Drawing
