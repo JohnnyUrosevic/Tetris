@@ -39,10 +39,23 @@ public:
 	}
 
 	//TODO add error checking in these methods
-	inline void setBlock(Vector2i pos, int type) {
+	bool setBlock(Vector2i pos, int type) {
 		board[pos.x][pos.y] = type;
 
-		//TODO CHECK IF ROW HAS CLEARED
+		bool rowCleared = true;
+		for (int i = 0; i < BOARD_WIDTH; i++) {
+			if (board[i][pos.y] == -1) {
+				rowCleared = false;
+				break;
+			}
+		}
+
+		//clear row
+		if (rowCleared) {
+			//TODO CLEAR ROW
+		}
+
+		return rowCleared;
 	}
 
 	inline int getBlock(Vector2i pos) {
@@ -74,6 +87,7 @@ private:
 	int type;
 	Vector2i blockPos[4];
 	Game* g;
+	unsigned int score;
 
 public:
 	Player(Game* game) {
