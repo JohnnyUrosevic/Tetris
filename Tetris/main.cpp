@@ -157,7 +157,7 @@ public:
 		//Place block
 		int linesCleared = 0;
 		for (int i = 0; i < 4; i++) {
-				linesCleared += (int) g->setBlock(blockPos[i], type);
+				linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
 		}
 		//TODO ADD TO SCORE
 
