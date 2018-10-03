@@ -28,6 +28,7 @@ std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
 class Game {
 private:
 	int board[BOARD_WIDTH][BOARD_HEIGHT]; //stores type values for block
+	unsigned int score;
 
 public:
 	Game() {
@@ -38,7 +39,12 @@ public:
 		}
 	}
 
+	inline void addScore(unsigned int score) {
+		this->score += score;
+	}
+
 	//TODO add error checking in these methods
+	//Return true if a row is cleared by placing the block
 	bool setBlock(Vector2i pos, int type) {
 		board[pos.x][pos.y] = type;
 
@@ -53,6 +59,9 @@ public:
 		//clear row
 		if (rowCleared) {
 			//TODO CLEAR ROW
+			for (int i = 0; i < BOARD_WIDTH; i++) {
+				board[i][pos.y] = -1;
+			}
 		}
 
 		return rowCleared;
@@ -87,7 +96,6 @@ private:
 	int type;
 	Vector2i blockPos[4];
 	Game* g;
-	unsigned int score;
 
 public:
 	Player(Game* game) {
@@ -147,9 +155,11 @@ public:
 		}
 
 		//Place block
+		int linesCleared = 0;
 		for (int i = 0; i < 4; i++) {
-			g->setBlock(blockPos[i] + dy, type);
+				linesCleared += (int) g->setBlock(blockPos[i], type);
 		}
+		//TODO ADD TO SCORE
 
 		newBlock();
 	}
@@ -180,9 +190,11 @@ public:
 		}
 		else {
 			//Place block down
+			int linesCleared = 0;
 			for (int i = 0; i < 4; i++) {
-				g->setBlock(blockPos[i], type);
+				linesCleared += (int) g->setBlock(blockPos[i], type);
 			}
+			//TODO ADD TO SCORE
 			//Get new block
 			newBlock();
 		}
