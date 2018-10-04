@@ -58,10 +58,19 @@ public:
 
 		//clear row
 		if (rowCleared) {
-			//TODO CLEAR ROW
-			for (int i = 0; i < BOARD_WIDTH; i++) {
-				board[i][pos.y] = -1;
+			//Rows above drop down
+			for (int y = pos.y; y > 0; y--) {
+				for (int x = 0; x < BOARD_WIDTH; x++) {
+					board[x][y] = board[x][y - 1];
+				}
 			}
+
+			//blank top row
+			for (int i = 0; i < BOARD_WIDTH; i++) {
+				board[i][0] = -1;
+			}
+            
+			pos.y--;
 		}
 
 		return rowCleared;
