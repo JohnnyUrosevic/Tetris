@@ -69,8 +69,6 @@ public:
 			for (int i = 0; i < BOARD_WIDTH; i++) {
 				board[i][0] = -1;
 			}
-            
-			pos.y--;
 		}
 
 		return rowCleared;
@@ -146,6 +144,8 @@ public:
 		for (int i = 0; i < 4; i++) { //commit temp to block pos
 			blockPos[i] = temp[i];
 		}
+
+		
 	}
 
 
@@ -166,7 +166,7 @@ public:
 		//Place block
 		int linesCleared = 0;
 		for (int i = 0; i < 4; i++) {
-				linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
+			linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
 		}
 		//TODO ADD TO SCORE
 
