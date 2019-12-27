@@ -5,18 +5,18 @@
 using namespace sf;
 
 const int BLOCK_TYPES[7][4] = {
-	{ 0, 2, 4, 6 }, // I
-	{ 0, 1, 2, 3 }, // O
-	{ 1, 2, 3, 5 }, // T
-	{ 0, 1, 3, 5 }, // L
 	{ 1, 3, 4, 5 }, // J
+	{ 1, 2, 3, 5 }, // T
+	{ 1, 2, 3, 4 }, // Z
 	{ 0, 2, 3, 5 }, // S
-	{ 1, 2, 3, 4 }  // Z
+	{ 0, 1, 2, 3 }, // O
+	{ 0, 2, 4, 6 }, // I
+	{ 0, 1, 3, 5 }  // L
 };
 
 const int TILESIZE = 18;
-const int BOARD_WIDTH = 15;
-const int BOARD_HEIGHT = 25;
+const int BOARD_WIDTH = 10;
+const int BOARD_HEIGHT = 20;
 
 //random
 std::random_device rd;     // only used once to initialise (seed) engine
@@ -120,7 +120,7 @@ public:
 	}
 
 	void rotate(int dir) { //-1 is left, 1 is right
-		if (type == 1) //O
+		if (type == 4) //O
 			return;
 		Vector2i temp[4]; //store new positions temporarily
 		Vector2i origin = blockPos[2];
@@ -145,9 +145,7 @@ public:
 			blockPos[i] = temp[i];
 		}
 
-		
 	}
-
 
 	void hardDrop() {
 		Vector2i dy(0, -1);
@@ -174,7 +172,6 @@ public:
 	}
 
 	void move(int dx, int dy) {
-
 		bool canMoveX = true;
 		bool canMoveY = true;
 
