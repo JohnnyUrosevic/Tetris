@@ -19,11 +19,7 @@ const int TILESIZE = 18;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGHT = 20;
 
-//random
-std::random_device rd;     // only used once to initialise (seed) engine
-std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-std::uniform_int_distribution<int> uni(0,6); // guaranteed unbiased
-
+const int BAG_SIZE = 7;
 
 //CLASSES TODO PUT IN SEPERATE FILES
 class Game {
@@ -131,18 +127,38 @@ private:
 	Vector2i blockPos[4];
 	Game* g;
 
+	std::vector<int> bag;
+	std::vector<int> next_bag;
+	int bagIndex;
+
 public:
-	Player(Game* game) {
+	Player(Game* game) : bag(BAG_SIZE), next_bag(BAG_SIZE) {
+		std::srand(unsigned(std::time(0)));
+
+		bag = {0, 1, 2, 3, 4, 5, 6};
+		next_bag = {0, 1, 2, 3, 4, 5, 6};
+
+		std::random_shuffle(bag.begin(), bag.end());
+		std::random_shuffle(next_bag.begin(), next_bag.end());
+
+		bagIndex = 0;
 		g = game;
 		newBlock();
 	}
 
 	void newBlock() {
-		type = uni(rng);
+		type = bag[bagIndex];
 		for (int i = 0; i < 4; i++) {
 			int n = BLOCK_TYPES[type][i];
 			blockPos[i].x = BOARD_WIDTH / 2 + n % 2;
 			blockPos[i].y = n / 2;
+		}
+
+		bagIndex++;
+		if (bagIndex == BAG_SIZE) {
+			bagIndex = 0;
+			bag = next_bag;
+			std::random_shuffle(next_bag.begin(), next_bag.end());
 		}
 	}
 
