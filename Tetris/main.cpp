@@ -2,6 +2,7 @@
 #include <random>
 #include <chrono>
 #include <iostream>
+#include <algorithm>
 using namespace sf;
 
 const int BLOCK_TYPES[7][4] = {
@@ -32,6 +33,8 @@ private:
 
 public:
 	Game() {
+		score = 0;
+		
 		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to -1
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
 				board[i][j] = -1;
@@ -140,6 +143,13 @@ public:
 			if (g->getBlock(temp[i]) != -1) //block in way
 				return;
 		}
+
+		const auto compare = [](Vector2i& a, Vector2i b) -> bool {
+			return a.y < b.y;
+		};
+
+		//sort array of positions top to bottom for line clearing logic
+		std::sort(temp, temp+4, compare);
 
 		for (int i = 0; i < 4; i++) { //commit temp to block pos
 			blockPos[i] = temp[i];
