@@ -30,11 +30,15 @@ class Game {
 private:
 	int board[BOARD_WIDTH][BOARD_HEIGHT]; //stores type values for block
 	unsigned int score;
+	unsigned int level;
+	unsigned int combo;
 
 public:
 	Game() {
 		score = 0;
-		
+		level = 1;
+		combo = 0;
+
 		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to -1
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
 				board[i][j] = -1;
@@ -44,6 +48,14 @@ public:
 
 	inline void addScore(unsigned int score) {
 		this->score += score;
+	}
+
+	inline void incrementCombo() {
+		this->combo++;
+	}
+
+	inline void resetCombo() {
+		this->combo = 0;
 	}
 
 	//TODO add error checking in these methods
@@ -79,6 +91,18 @@ public:
 
 	inline int getBlock(Vector2i pos) {
 		return board[pos.x][pos.y];
+	}
+
+	inline unsigned int getScore() {
+		return score;
+	}
+
+	inline unsigned int getLevel() {
+		return level;
+	}
+
+	inline unsigned int getCombo() {
+		return combo;
 	}
 
 	//Handles graphics for every frame
@@ -145,7 +169,7 @@ public:
 		}
 
 		const auto compare = [](Vector2i& a, Vector2i b) -> bool {
-			return a.y < b.y;
+			return a.y < b.y || (a.y == b.y && a.x < b.x);
 		};
 
 		//sort array of positions top to bottom for line clearing logic
@@ -155,6 +179,44 @@ public:
 			blockPos[i] = temp[i];
 		}
 
+	}
+
+	void placeBlock(Vector2i dy) {
+		int linesCleared = 0;
+		for (int i = 0; i < 4; i++) {
+			linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
+		}
+
+		switch (linesCleared) {
+			case 1:
+				g->addScore(100 * g->getLevel());
+				break;
+			case 2:
+				g->addScore(300 * g->getLevel());
+				break;
+			case 3:
+				g->addScore(500 * g->getLevel());
+				break;
+			case 4:
+				g->addScore(800 * g->getLevel());
+				break;
+		}
+
+		if (linesCleared) {
+			g->incrementCombo();
+		}
+		else {
+			g->resetCombo();
+		}
+
+		if (g->getCombo() > 1) {
+			g->addScore(800 * g->getCombo() * g->getLevel());
+		}
+
+		std::cout << "Score: " << g->getScore() << " Combo: " << g->getCombo() << std::endl;
+		std::fflush(stdout);
+
+		newBlock();
 	}
 
 	void hardDrop() {
@@ -171,14 +233,7 @@ public:
 			}
 		}
 
-		//Place block
-		int linesCleared = 0;
-		for (int i = 0; i < 4; i++) {
-			linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
-		}
-		//TODO ADD TO SCORE
-
-		newBlock();
+		placeBlock(dy);
 	}
 
 	void move(int dx, int dy) {
@@ -199,20 +254,14 @@ public:
 				blockPos[i].x += dx;
 			}
 		}
+
 		if (canMoveY) {
 			for (int i = 0; i < 4; i++) {
 				blockPos[i].y += dy;
 			}
 		}
 		else {
-			//Place block down
-			int linesCleared = 0;
-			for (int i = 0; i < 4; i++) {
-				linesCleared += (int) g->setBlock(blockPos[i], type);
-			}
-			//TODO ADD TO SCORE
-			//Get new block
-			newBlock();
+			placeBlock(Vector2i(0, 0));
 		}
 
 	}
