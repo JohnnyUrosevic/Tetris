@@ -291,6 +291,37 @@ public:
 
 	}
 
+	void draw_ghost(Texture& t, RenderWindow& window) {
+		Vector2i dy(0, -1);
+		Vector2i below(0, 1);
+
+		bool canMoveY = true;
+		while (canMoveY) {
+			dy.y++;
+			for (int i = 3; i >= 0; i--) { //loop bottom to top
+				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + below) != BLOCKS::None) {
+					canMoveY = false;
+					break;
+				}
+			}
+		}
+
+		for (int i = 0; i < 4; i++) {
+			Sprite block;
+
+			block.setTexture(t);
+
+			//Slices specific color we want
+			block.setTextureRect(IntRect(type * TILESIZE, TILESIZE, TILESIZE, TILESIZE));
+
+			Vector2i v = blockPos[i] + dy;
+
+			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
+
+			window.draw(block);
+		}
+	}
+
 	void draw(Texture& t, RenderWindow& window) {
 		for (int i = 0; i < 4; i++) {
 			Sprite block;
@@ -399,6 +430,7 @@ int main() {
 		game.draw(t, window);
 
 		//draw player piece
+		p.draw_ghost(t, window);
 		p.draw(t, window);
 
 		window.display();
