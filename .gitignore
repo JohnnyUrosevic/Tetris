@@ -260,6 +260,6 @@ paket-files/
 __pycache__/
 *.pyc
 
-Tetris/.vscode/
+.vscode/
 main.o
 tetris
