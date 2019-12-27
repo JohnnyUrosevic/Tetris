@@ -151,9 +151,13 @@ private:
 	std::vector<int> next_bag;
 	int bagIndex;
 
+	bool can_hold;
+	int held_block = BLOCKS::None;
 public:
 	Player(Game* game) : bag(BAG_SIZE), next_bag(BAG_SIZE) {
 		std::srand(unsigned(std::time(0)));
+
+		can_hold = true;
 
 		bag = {0, 1, 2, 3, 4, 5, 6};
 		next_bag = {0, 1, 2, 3, 4, 5, 6};
@@ -193,7 +197,7 @@ public:
 	}
 
 	void rotate(int dir) { //-1 is left, 1 is right
-		if (type == 4) //O
+		if (type == BLOCKS::O) //O
 			return;
 		Vector2i temp[4]; //store new positions temporarily
 		Vector2i origin = blockPos[2];
@@ -267,6 +271,8 @@ public:
 		std::fflush(stdout);
 
 		newBlock();
+
+		can_hold = true;
 	}
 
 	Vector2i getDropDistance() {
@@ -290,6 +296,20 @@ public:
 		Vector2i dy = getDropDistance();
 
 		placeBlock(dy);
+	}
+
+	void hold() {
+		if (can_hold) {
+			if (held_block != BLOCKS::None) {
+				bagIndex--;
+				bag[bagIndex] = held_block;
+			}
+
+			held_block = type;
+			newBlock();
+
+			can_hold = false;
+		}
 	}
 
 	void move(int dx, int dy) {
@@ -322,10 +342,9 @@ public:
 
 	}
 
-	void drawBlock(Texture& t, RenderWindow& window, const Vector2i& dy, bool ghost) {
+	void drawBlock(Texture& t, RenderWindow& window, int type, const Vector2i pos[], bool ghost) {
 		for (int i = 0; i < 4; i++) {
-			Vector2i pos = blockPos[i] + dy;
-			if (pos.y < 0) {
+			if (pos[i].y < 0) {
 				continue;
 			}
 
@@ -336,7 +355,7 @@ public:
 			//Slices specific color we want
 			block.setTextureRect(IntRect(type * TILESIZE, ((int) ghost) * TILESIZE, TILESIZE, TILESIZE));
 
-			Vector2i v = pos;
+			Vector2i v = pos[i];
 
 			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
 
@@ -347,16 +366,35 @@ public:
 	void drawGhost(Texture& t, RenderWindow& window) {
 		Vector2i dy = getDropDistance();
 
-		drawBlock(t, window, dy, true);
+		Vector2i pos[4];
+		for (int i = 0; i < 4; i++) { 
+			pos[i] = blockPos[i] + dy;
+		}
+		drawBlock(t, window, type, pos, true);
+	}
+
+	void drawHold(Texture& t, RenderWindow& window) {
+		if (held_block == BLOCKS::None) {
+			return;
+		}
+
+		Vector2i pos[4];
+		for (int i = 0; i < 4; i++) {
+			int n = BLOCK_TYPES[held_block][i];
+			pos[i].x = BOARD_WIDTH + 2 + n % 2;
+			pos[i].y = n / 2 + 2;
+		}
+
+		drawBlock(t, window, held_block, pos, false);
 	}
 
 	void draw(Texture& t, RenderWindow& window) {
-		drawBlock(t, window, Vector2i(0, 0), false);
+		drawBlock(t, window, type, blockPos, false);
 	}
 };
 
 int main() {
-	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH + 100, TILESIZE * BOARD_HEIGHT), "Tetris");
+	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH + 108, TILESIZE * BOARD_HEIGHT), "Tetris");
 
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
@@ -393,6 +431,7 @@ int main() {
 			if (event.type == Event::KeyPressed) {
 				if (event.key.code == Keyboard::Space) {
 					p.hardDrop();
+					startTime = std::chrono::steady_clock::now();
 				}
 
 				if (event.key.code == Keyboard::Up || event.key.code == Keyboard::W) {
@@ -401,6 +440,10 @@ int main() {
 
 				if (event.key.code == Keyboard::Z) {
 					p.rotate(-1);
+				}
+
+				if (event.key.code == Keyboard::LShift || event.key.code == Keyboard::RShift) {
+					p.hold();
 				}
 			}
 		}
@@ -446,6 +489,7 @@ int main() {
 
 		//draw player piece
 		p.drawGhost(t, window);
+		p.drawHold(t, window);
 		p.draw(t, window);
 
 		window.display();
