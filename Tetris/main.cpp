@@ -40,11 +40,14 @@ private:
 	unsigned int level;
 	unsigned int combo;
 
+	bool game_over;
 public:
 	Game() {
 		score = 0;
 		level = 1;
 		combo = 0;
+
+		game_over = false;
 
 		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to BLOCK.None
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
@@ -96,6 +99,10 @@ public:
 		return rowCleared;
 	}
 
+	inline void gameOver() {
+		game_over = true;
+	}
+
 	inline int getBlock(Vector2i pos) {
 		return board[pos.x][pos.y];
 	}
@@ -110,6 +117,10 @@ public:
 
 	inline unsigned int getCombo() {
 		return combo;
+	}
+
+	inline bool getGameOver() {
+		return game_over;
 	}
 
 	//Handles graphics for every frame
@@ -156,11 +167,21 @@ public:
 	}
 
 	void newBlock() {
+		Vector2i dy = Vector2i(0, 0);
+
 		type = bag[bagIndex];
 		for (int i = 0; i < 4; i++) {
 			int n = BLOCK_TYPES[type][i];
 			blockPos[i].x = BOARD_WIDTH / 2 + n % 2;
 			blockPos[i].y = n / 2;
+
+			if (g->getBlock(blockPos[i]) != BLOCKS::None) {
+				dy.y--;
+			}
+		}
+
+		for (int i = 0; i < 4; i++) {
+			blockPos[i] += dy;
 		}
 
 		bagIndex++;
@@ -209,6 +230,10 @@ public:
 	void placeBlock(Vector2i dy) {
 		int linesCleared = 0;
 		for (int i = 0; i < 4; i++) {
+			if (blockPos[i].y < 0) {
+				g->gameOver();
+				return;
+			}
 			linesCleared += (int) g->setBlock(blockPos[i] + dy, type);
 		}
 
@@ -244,7 +269,7 @@ public:
 		newBlock();
 	}
 
-	void hardDrop() {
+	Vector2i getDropDistance() {
 		Vector2i dy(0, -1);
 		Vector2i below(0, 1);
 		bool canMoveY = true;
@@ -257,6 +282,12 @@ public:
 				}
 			}
 		}
+
+		return dy;
+	}
+
+	void hardDrop() {
+		Vector2i dy = getDropDistance();
 
 		placeBlock(dy);
 	}
@@ -291,30 +322,21 @@ public:
 
 	}
 
-	void draw_ghost(Texture& t, RenderWindow& window) {
-		Vector2i dy(0, -1);
-		Vector2i below(0, 1);
-
-		bool canMoveY = true;
-		while (canMoveY) {
-			dy.y++;
-			for (int i = 3; i >= 0; i--) { //loop bottom to top
-				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + below) != BLOCKS::None) {
-					canMoveY = false;
-					break;
-				}
-			}
-		}
-
+	void drawBlock(Texture& t, RenderWindow& window, const Vector2i& dy, bool ghost) {
 		for (int i = 0; i < 4; i++) {
+			Vector2i pos = blockPos[i] + dy;
+			if (pos.y < 0) {
+				continue;
+			}
+
 			Sprite block;
 
 			block.setTexture(t);
 
 			//Slices specific color we want
-			block.setTextureRect(IntRect(type * TILESIZE, TILESIZE, TILESIZE, TILESIZE));
+			block.setTextureRect(IntRect(type * TILESIZE, ((int) ghost) * TILESIZE, TILESIZE, TILESIZE));
 
-			Vector2i v = blockPos[i] + dy;
+			Vector2i v = pos;
 
 			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
 
@@ -322,21 +344,14 @@ public:
 		}
 	}
 
+	void drawGhost(Texture& t, RenderWindow& window) {
+		Vector2i dy = getDropDistance();
+
+		drawBlock(t, window, dy, true);
+	}
+
 	void draw(Texture& t, RenderWindow& window) {
-		for (int i = 0; i < 4; i++) {
-			Sprite block;
-
-			block.setTexture(t);
-
-			//Slices specific color we want
-			block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
-
-			Vector2i v = blockPos[i];
-
-			block.setPosition(v.x * TILESIZE, v.y * TILESIZE);
-
-			window.draw(block);
-		}
+		drawBlock(t, window, Vector2i(0, 0), false);
 	}
 };
 
@@ -363,7 +378,7 @@ int main() {
 	double moveDelay = .09;
 
 	//Game Loop
-	while (window.isOpen()) {
+	while (window.isOpen() && !game.getGameOver()) {
 		timeBetweenDrops = .25;
 		dx = 0;
 		dy = 0;
@@ -430,7 +445,7 @@ int main() {
 		game.draw(t, window);
 
 		//draw player piece
-		p.draw_ghost(t, window);
+		p.drawGhost(t, window);
 		p.draw(t, window);
 
 		window.display();
