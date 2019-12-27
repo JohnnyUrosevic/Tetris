@@ -15,6 +15,17 @@ const int BLOCK_TYPES[7][4] = {
 	{ 0, 1, 3, 5 }  // L
 };
 
+enum BLOCKS {
+	J,
+	T,
+	Z,
+	S,
+	O,
+	I,
+	L,
+	None
+};
+
 const int TILESIZE = 18;
 const int BOARD_WIDTH = 10;
 const int BOARD_HEIGHT = 20;
@@ -35,9 +46,9 @@ public:
 		level = 1;
 		combo = 0;
 
-		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to -1
+		for (int i = 0; i < BOARD_WIDTH; i++) { //intialize board to BLOCK.None
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
-				board[i][j] = -1;
+				board[i][j] = BLOCKS::None;
 			}
 		}
 	}
@@ -61,7 +72,7 @@ public:
 
 		bool rowCleared = true;
 		for (int i = 0; i < BOARD_WIDTH; i++) {
-			if (board[i][pos.y] == -1) {
+			if (board[i][pos.y] == BLOCKS::None) {
 				rowCleared = false;
 				break;
 			}
@@ -78,7 +89,7 @@ public:
 
 			//blank top row
 			for (int i = 0; i < BOARD_WIDTH; i++) {
-				board[i][0] = -1;
+				board[i][0] = BLOCKS::None;
 			}
 		}
 
@@ -107,15 +118,13 @@ public:
 			for (int j = 0; j < BOARD_HEIGHT; j++) {
 				int type = board[i][j];
 
-				if (type != -1) { //not a block
-					Sprite block;
-					block.setTexture(t);
+				Sprite block;
+				block.setTexture(t);
 
-					block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
+				block.setTextureRect(IntRect(type * TILESIZE, 0, TILESIZE, TILESIZE));
 
-					block.setPosition(i * TILESIZE, j * TILESIZE);
-					window.draw(block);
-				}
+				block.setPosition(i * TILESIZE, j * TILESIZE);
+				window.draw(block);
 			}
 		}
 	}
@@ -180,7 +189,7 @@ public:
 			temp[i].y += origin.y;
 			if (temp[i].y < 0 || temp[i].y >= BOARD_HEIGHT) //y out of bounds
 				return;
-			if (g->getBlock(temp[i]) != -1) //block in way
+			if (g->getBlock(temp[i]) != BLOCKS::None) //block in way
 				return;
 		}
 
@@ -242,7 +251,7 @@ public:
 		while (canMoveY) {
 			dy.y++;
 			for (int i = 3; i >= 0; i--) { //loop bottom to top
-				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + below) != -1) {
+				if ((blockPos[i] + dy).y == BOARD_HEIGHT - 1 || g->getBlock(blockPos[i] + dy + below) != BLOCKS::None) {
 					canMoveY = false;
 					break;
 				}
@@ -259,9 +268,9 @@ public:
 		for (int i = 0; i < 4; i++) {
 			Vector2i vx(dx, 0);
 			Vector2i vy(0, dy);
-			if (g->getBlock(blockPos[i] + vx) != -1 || blockPos[i].x + dx > BOARD_WIDTH - 1 || blockPos[i].x + dx < 0) //block in way horizontally
+			if (g->getBlock(blockPos[i] + vx) != BLOCKS::None || blockPos[i].x + dx > BOARD_WIDTH - 1 || blockPos[i].x + dx < 0) //block in way horizontally
 				canMoveX = false;
-			if (g->getBlock(blockPos[i] + vy) != -1 || (blockPos[i].y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
+			if (g->getBlock(blockPos[i] + vy) != BLOCKS::None || (blockPos[i].y + dy) == BOARD_HEIGHT) //block in way vertically or hit floor
 				canMoveY = false;
 		}
 
@@ -301,7 +310,7 @@ public:
 };
 
 int main() {
-	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH, TILESIZE * BOARD_HEIGHT), "Tetris");
+	RenderWindow window(VideoMode(TILESIZE * BOARD_WIDTH + 100, TILESIZE * BOARD_HEIGHT), "Tetris");
 
 	Texture t;
 	t.loadFromFile("../Textures/tiles.png");
@@ -386,11 +395,11 @@ int main() {
 		//Drawing
 		window.clear();
 
-		//draw player piece
-		p.draw(t, window);
-
 		//draw board
 		game.draw(t, window);
+
+		//draw player piece
+		p.draw(t, window);
 
 		window.display();
 	}
